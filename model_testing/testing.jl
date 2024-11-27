@@ -75,6 +75,35 @@ hgf_sensory = init_hgf(
 
 ### TEST Initialization of Structure ###
 
+hgf_sensory.all_nodes
+hgf_sensory.all_nodes.families
+hgf_sensory.input_nodes
+
+for node in values(hgf_sensory.all_nodes)
+    node_type = typeof(node)
+    node_fields = fieldnames(node_type)
+    println("Node Name: ", node.name)
+    println("Node Type: ", node_type)
+    println("Fields: ", node_fields)
+    println("--------------------------")
+end
+
+hgf_sensory.all_nodes["Seg_sV"].parameters.coupling_strengths
+
+print(hgf_sensory.all_nodes)
+
+# Check if a modelcomparison node exists
+node_types = []
+#check in input nodes because comparison node is an input node
+for node in values(hgf_sensory.input_nodes)
+	node_type = typeof(node)
+	push!(node_types, node_type)
+end
+
+if Main.HierarchicalGaussianFiltering.ModelComparisonNode in node_types
+	print("Succes")
+end
+
 print(get_parameters(hgf_sensory))
 
 function print_families_overview(hgf)
@@ -90,23 +119,9 @@ end
 # Call the function
 print_families_overview(hgf_sensory)
 
-hgf_sensory.all_nodes["Seg_sV"].families
+hgf_sensory.all_nodes["Seg_sV"].edges
 
 println(fieldnames(typeof(hgf_sensory.all_nodes["Seg_sV"].edges)))
-
-update_order_meta = ["common_cause_state", "common_cause_input"]
-
-parametr_groups = 
-
-
-hgf_meta = init_hgf(
-	nodes = nodes_meta,
-	edges = edges_meta,
-	update_order = update_order_meta
-)
-
-print(get_parameters(hgf_sensory))
-print(get_parameters(hgf_meta))
 
 ### Give INPUTS ###
 
