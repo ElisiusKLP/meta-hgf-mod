@@ -183,6 +183,10 @@ give_inputs!(hgf_sensory, input_vector)
 
 history = get_history(hgf_sensory)
 
-for key in keys(history)
+mc_history = get_history(hgf_sensory, "CausalInference")
+
+full_history = merge(history, mc_history)
+
+for key in enumerate(keys(full_history))
 	println("this is the key $key")
 end
