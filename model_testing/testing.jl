@@ -190,3 +190,91 @@ full_history = merge(history, mc_history)
 for key in enumerate(keys(full_history))
 	println("this is the key $key")
 end
+
+# plotting the CausalInference node parameters
+
+
+using Plots
+
+plotting_variable = full_history[("CausalInference", "probabilities")]
+posterior_C = function_history["posterior_C_history"]
+#plotting_variable = function_history["posterior_probability"]
+
+ForcedFusion_probabilties = [dict["ForcedFusion"] for dict in plotting_variable]
+
+time = 1:length(plotting_variable)
+posterior_plot = plot(time, ForcedFusion_probabilties,
+	xlabel = "Timestep",
+	ylabel = "surprise difference",
+	title = "HGF Posterior probability (common cause) over time",
+	)
+
+time = 1:length(posterior_C)
+input_vector
+auditory_position = [vector[1] for vector in input_vector]
+visual_position = [vector[2] for vector in input_vector]
+
+input_plot = plot(time, auditory_position,
+xlabel = "Timestep",
+ylabel = "Position",
+label = "auditory_position",
+color = :blue,
+title = "Input vector visualization",
+)
+plot!(time, visual_position, label="visual_position", color = :red)
+
+@assert input_plot !== nothing "First plot is not defined"
+
+combined_plot = plot(input_plot, posterior_plot, layout = (2, 1), size = (1200,1200))
+
+# put in all parameter SETTINGS
+sensory_io = IOBuffer()
+print(sensory_io, get_parameters(hgf_sensory))
+sensory_hgf_params = String(take!(sensory_io))
+
+meta_io = IOBuffer()
+print(meta_io, get_parameters(hgf_meta))
+meta_hgf_params = String(take!(meta_io))
+
+combined_params_text = """
+Sensory HGF Parameters:
+$sensory_hgf_params
+
+Meta HGF Parameters:
+$meta_hgf_params
+"""
+# Function to split long text into smaller chunks for annotation
+function wrap_text(text, max_length=80)
+    lines = split(text, '\n')
+    wrapped_lines = []
+    for line in lines
+        while length(line) > max_length
+            push!(wrapped_lines, line[1:max_length])
+            line = line[max_length+1:end]
+        end
+        push!(wrapped_lines, line)
+    end
+    return wrapped_lines
+end
+
+# Wrap the combined text to avoid long lines
+wrapped_text_lines = wrap_text(combined_params_text, 120)
+
+# Create the text-only plot
+text_plot = plot(axis=([], false), margin=0Plots.cm)
+y_position = 1.0           # Start at top of the plot
+y_step = 0.05              # Spacing between each line
+
+# Annotate each wrapped line in the plot
+for line in wrapped_text_lines
+    annotate!(text_plot, 0.5, y_position, text(line, :center, 6, :black))
+    y_position -= y_step   # Move down for the next line
+end
+
+display(text_plot)
+
+#paring inputs and output plot
+combined_plot = plot(input_plot, posterior_plot, posterior_plot2, text_plot, layout = (4, 1), size = (1200,1200))
+
+# INSPECTING
+
