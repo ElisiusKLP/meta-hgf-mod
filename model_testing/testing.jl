@@ -3,18 +3,22 @@
 include("/work/HGF_MOD/HierarchicalGaussianFiltering.jl/src/HierarchicalGaussianFiltering.jl")
 using .HierarchicalGaussianFiltering
 
+using CSV
+using DataFrames
+using Plots
+
 ### SETUP HGF INIT STRUCTURE ###
 
 nodes_sensory = [
     # SEGREGATION
 	ContinuousInput(
 		name = "u_A",
-		input_noise = -2,
+		input_noise = -1,
 		bias = 0
 	),
 	ContinuousInput(
 		name = "u_V",
-		input_noise = -2,
+		input_noise = -1,
 		bias = 0
 	),
     ContinuousState(
@@ -166,7 +170,7 @@ print(names(df))
 
 # Create the vector using comprehension
 input_vector =[]
-input_vector = [ [row.auditory_position, row.visual_position, row.auditory_position, row.visual_position] for row in eachrow(df) ]
+input_vector = [ [row.auditory_position, row.visual_position] for row in eachrow(df) ]
 
 
 ### Feed inputs ###
@@ -191,17 +195,20 @@ for key in enumerate(keys(full_history))
 	println("this is the key $key")
 end
 
-# plotting the CausalInference node parameters
+###########
+## PLOTS ##
+###########
 
+# plotting the CausalInference node parameters
 
 using Plots
 
 plotting_variable = full_history[("CausalInference", "probabilities")]
-posterior_C = function_history["posterior_C_history"]
 #plotting_variable = function_history["posterior_probability"]
 
 ForcedFusion_probabilties = [dict["ForcedFusion"] for dict in plotting_variable]
 
+# 1. BINDING TENDENCY
 time = 1:length(plotting_variable)
 posterior_plot = plot(time, ForcedFusion_probabilties,
 	xlabel = "Timestep",
@@ -209,7 +216,8 @@ posterior_plot = plot(time, ForcedFusion_probabilties,
 	title = "HGF Posterior probability (common cause) over time",
 	)
 
-time = 1:length(posterior_C)
+# 2. INPUT Positions
+time = 1:length(plotting_variable)
 input_vector
 auditory_position = [vector[1] for vector in input_vector]
 visual_position = [vector[2] for vector in input_vector]
@@ -225,15 +233,54 @@ plot!(time, visual_position, label="visual_position", color = :red)
 
 @assert input_plot !== nothing "First plot is not defined"
 
+# Combination
 combined_plot = plot(input_plot, posterior_plot, layout = (2, 1), size = (1200,1200))
 
-# put in all parameter SETTINGS
+# 3. ESTIMATED Signals
+FF_sAV_est = full_history[("FF_sAV", "posterior_mean")][2:end]
+Seg_sA = full_history[("Seg_sA", "posterior_mean")][2:end]
+Seg_sV = full_history[("Seg_sV", "posterior_mean")][2:end]
+time = 1:1000
+
+# Plot FF_sAV_est in solid purple
+output_plot = plot(
+    time,
+    FF_sAV_est,
+    label = "FF_sAV",
+    color = :purple,
+    linestyle = :solid,
+    xlabel = "Time",
+    ylabel = "Estimates"
+)
+
+# Add Seg_sA in dotted blue
+plot!(
+    time,
+    Seg_sA,
+    label = "Seg_sA",
+    color = :blue,
+    linestyle = :dot
+)
+
+# Add Seg_sV in dotted red
+plot!(
+    time,
+    Seg_sV,
+    label = "Seg_sV",
+    color = :red,
+    linestyle = :dot
+)
+
+display(output_plot)
+
+# 4. TEXT PLOT
+# ADD in all parameter SETTINGS
 sensory_io = IOBuffer()
 print(sensory_io, get_parameters(hgf_sensory))
 sensory_hgf_params = String(take!(sensory_io))
 
 meta_io = IOBuffer()
-print(meta_io, get_parameters(hgf_meta))
+print(meta_io, get_parameters(hgf_sensory))
 meta_hgf_params = String(take!(meta_io))
 
 combined_params_text = """
@@ -274,7 +321,6 @@ end
 display(text_plot)
 
 #paring inputs and output plot
-combined_plot = plot(input_plot, posterior_plot, posterior_plot2, text_plot, layout = (4, 1), size = (1200,1200))
+combined_plot = plot(input_plot, output_plot, posterior_plot, text_plot, layout = (4, 1), size = (1200,1200))
 
 # INSPECTING
-
