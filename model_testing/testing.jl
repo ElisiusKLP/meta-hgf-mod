@@ -13,12 +13,12 @@ nodes_sensory = [
     # SEGREGATION
 	ContinuousInput(
 		name = "u_A",
-		input_noise = -1,
+		input_noise = -2,
 		bias = 0
 	),
 	ContinuousInput(
 		name = "u_V",
-		input_noise = -1,
+		input_noise = -2,
 		bias = 0
 	),
     ContinuousState(
@@ -53,10 +53,10 @@ nodes_sensory = [
 
 
 edges_sensory = Dict(
-	("u_A", "Seg_sA") => ObservationCoupling(),
-	("u_A", "FF_sAV") => ObservationCoupling(),
-	("u_V", "FF_sAV") => ObservationCoupling(),
-	("u_V", "Seg_sV") => ObservationCoupling(),
+	("u_A", "Seg_sA") => WeightedObservationCoupling(),
+	("u_A", "FF_sAV") => WeightedObservationCoupling(),
+	("u_V", "FF_sAV") => WeightedObservationCoupling(),
+	("u_V", "Seg_sV") => WeightedObservationCoupling(),
 )
 
 #CHANGE THIS TO THE CORRECT ORDER
